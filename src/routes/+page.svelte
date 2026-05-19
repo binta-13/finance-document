@@ -245,7 +245,7 @@
 									<p class="font-semibold text-slate-900">Drag & drop document</p>
 									<p class="text-sm text-slate-500">PDF, JPG, PNG up to 10MB (multiple files)</p>
 								</div>
-								<label class="bg-primary hover:bg-primary/90 mt-2 inline-flex cursor-pointer items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors shadow-md shadow-blue-500/20">
+								<label class="bg-primary hover:bg-primary/90 mt-2 inline-flex cursor-pointer items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold text-black transition-colors shadow-md shadow-blue-500/20">
 									Browse Files
 									<input type="file" accept="image/*,application/pdf" multiple hidden onchange={onFilePick}>
 								</label>
