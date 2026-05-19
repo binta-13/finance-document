@@ -30,6 +30,8 @@
 	let docs = $state(data.docs ?? []);
 	let pending = $state(data.pending ?? []);
 	let uploading = $state(false);
+	let uploadCount = $state(0);
+	let totalUploads = $state(0);
 	let ocrRunning = $state(false);
 	let dragOver = $state(false);
 	let vendorFilter = $state('');
@@ -84,33 +86,39 @@
 		finally { ocrRunning = false; }
 	}
 
-	async function handleUpload(file: File) {
+	async function handleUpload(files: File[]) {
 		uploading = true;
-		const fd = new FormData();
-		fd.append('file', file);
-		try {
-			const res = await fetch('/api/upload', { method: 'POST', body: fd });
-			if (res.ok) {
-				const doc = await res.json();
-				await runServerOcr(doc.id);
-				await loadDocs();
-			}
-		} finally { uploading = false; }
+		totalUploads = files.length;
+		uploadCount = 0;
+		for (const file of files) {
+			const fd = new FormData();
+			fd.append('file', file);
+			try {
+				const res = await fetch('/api/upload', { method: 'POST', body: fd });
+				if (res.ok) {
+					const doc = await res.json();
+					await runServerOcr(doc.id);
+				}
+			} catch { /* ignore */ }
+			uploadCount++;
+		}
+		uploading = false;
+		await loadDocs();
 	}
 
 	function onDrop(e: DragEvent) {
 		e.preventDefault();
 		dragOver = false;
-		const file = e.dataTransfer?.files?.[0];
-		if (file) handleUpload(file);
+		const files = Array.from(e.dataTransfer?.files ?? []);
+		if (files.length) handleUpload(files);
 	}
 
 	function onDragOver(e: DragEvent) { e.preventDefault(); dragOver = true; }
 	function onDragLeave() { dragOver = false; }
 
 	function onFilePick(e: Event) {
-		const file = (e.target as HTMLInputElement).files?.[0];
-		if (file) handleUpload(file);
+		const files = Array.from((e.target as HTMLInputElement).files ?? []);
+		if (files.length) handleUpload(files);
 	}
 
 	async function deleteDoc(id: string) {
@@ -224,7 +232,7 @@
 							<div class="flex flex-col items-center gap-4 text-center">
 								<div class="h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600"></div>
 								<div class="space-y-1">
-									<p class="font-semibold text-slate-900">{uploading ? 'Uploading File...' : 'Running AI OCR...'}</p>
+									<p class="font-semibold text-slate-900">{uploading ? `Uploading ${uploadCount + 1} of ${totalUploads}...` : 'Running AI OCR...'}</p>
 									<p class="text-xs text-slate-500">This might take a few seconds</p>
 								</div>
 							</div>
@@ -235,11 +243,11 @@
 								</div>
 								<div class="space-y-1">
 									<p class="font-semibold text-slate-900">Drag & drop document</p>
-									<p class="text-sm text-slate-500">PDF, JPG, PNG up to 10MB</p>
+									<p class="text-sm text-slate-500">PDF, JPG, PNG up to 10MB (multiple files)</p>
 								</div>
 								<label class="bg-primary hover:bg-primary/90 mt-2 inline-flex cursor-pointer items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors shadow-md shadow-blue-500/20">
 									Browse Files
-									<input type="file" accept="image/*,application/pdf" hidden onchange={onFilePick}>
+									<input type="file" accept="image/*,application/pdf" multiple hidden onchange={onFilePick}>
 								</label>
 							</div>
 						{/if}
