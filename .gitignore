@@ -1,0 +1,11 @@
+node_modules/
+.svelte-kit/
+.wrangler/
+.vscode/
+.dev.vars
+.env
+.env.local
+wrangler.toml
+.npmrc
+*.log
+.DS_Store
