@@ -1,4 +1,5 @@
 import { json, text } from '@sveltejs/kit';
+import { generateInvoiceCsv, type InvoiceLineItem } from '$lib/csv.js';
 
 export async function GET({ params, url, platform }) {
 	const env = platform?.env;
@@ -21,33 +22,29 @@ export async function GET({ params, url, platform }) {
 
 	if (!extraction) return json({ error: 'No extraction found for this document' }, { status: 404 });
 
-	let lineItems: { description: string | null; quantity: number | null; unit_price: number | null; amount: number | null }[] = [];
 	const liResult = await env.DB.prepare(
-		'SELECT description, quantity, unit_price, amount FROM line_items WHERE extraction_id = ?'
-	).bind(extraction.id).all();
-	lineItems = liResult.results as typeof lineItems;
-
-	function escapeCsv(val: unknown): string {
-		const s = val?.toString() ?? '';
-		if (s.includes(',') || s.includes('"') || s.includes('\n') || s.includes('\r')) {
-			return `"${s.replace(/"/g, '""')}"`;
-		}
-		return s;
-	}
+		'SELECT id, description, quantity, unit_price, amount FROM line_items WHERE extraction_id = ?'
+	).bind(extraction.id).all<InvoiceLineItem>();
+	const lineItems = liResult.results as InvoiceLineItem[];
 
 	const format = url.searchParams.get('format') ?? 'json';
 	const payload = extraction.edited_json ? JSON.parse(extraction.edited_json) : JSON.parse(extraction.raw_json ?? '{}');
 	const output = { document: { id: doc.id, filename: doc.filename }, extraction: { ...payload, line_items: lineItems } };
 
 	if (format === 'csv') {
-		const header = 'vendor,date,total,currency,description,quantity,unit_price,amount';
-		const rows = lineItems.length
-			? lineItems.map(i =>
-				[escapeCsv(payload.vendor), escapeCsv(payload.date), escapeCsv(payload.total), escapeCsv(payload.currency),
-				 escapeCsv(i.description), escapeCsv(i.quantity), escapeCsv(i.unit_price), escapeCsv(i.amount)].join(',')
-			).join('\r\n')
-			: `${escapeCsv(payload.vendor)},${escapeCsv(payload.date)},${escapeCsv(payload.total)},${escapeCsv(payload.currency)},,,,,`;
-		return text(`${header}\r\n${rows}`, {
+		const csv = generateInvoiceCsv({
+			id: doc.id,
+			filename: doc.filename,
+			status: doc.status,
+			created_at: doc.created_at,
+			vendor: (payload as Record<string, unknown>).vendor as string | null ?? extraction.vendor,
+			date: (payload as Record<string, unknown>).date as string | null ?? extraction.date,
+			total: (payload as Record<string, unknown>).total as number | null ?? extraction.total,
+			currency: (payload as Record<string, unknown>).currency as string | null ?? extraction.currency,
+			is_reviewed: extraction.is_reviewed === 1,
+			line_items: lineItems,
+		});
+		return text(csv, {
 			headers: { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': `attachment; filename="${doc.filename}_export.csv"` }
 		});
 	}

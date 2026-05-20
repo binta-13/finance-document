@@ -12,6 +12,7 @@
 	import { Badge } from "$lib/components/ui/badge/index.js";
 	import { Card, CardContent, CardHeader, CardTitle } from "$lib/components/ui/card/index.js";
 	import { cn } from "$lib/utils.js";
+	import type { Document } from "$lib/types.js";
 	import { 
 		FileText, 
 		Clock, 
@@ -27,8 +28,8 @@
 
 	let { data } = $props();
 
-	let docs = $state(data.docs ?? []);
-	let pending = $state(data.pending ?? []);
+	let docs = $state(data.docs ?? [] as Document[]);
+	let pending = $state(data.pending ?? [] as Document[]);
 	let uploading = $state(false);
 	let uploadCount = $state(0);
 	let totalUploads = $state(0);
@@ -62,9 +63,9 @@
 			const res = await fetch(`/api/documents?${params}`);
 			if (res.ok) {
 				const json = await res.json();
-				const d = Array.isArray(json.data) ? json.data : [];
+				const d = (Array.isArray(json.data) ? json.data : []) as Document[];
 				docs = d;
-				pending = d.filter((x: any) => x.status === 'pending' || x.status === 'processing');
+				pending = d.filter(x => x.status === 'pending' || x.status === 'processing');
 			}
 		} catch { /* ignore */ }
 	}

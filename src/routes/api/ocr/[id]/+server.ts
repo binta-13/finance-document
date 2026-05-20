@@ -1,5 +1,20 @@
 import { json } from '@sveltejs/kit';
 
+interface VisionLineItem {
+	description: string | null;
+	quantity: number | null;
+	unit_price: number | null;
+	amount: number | null;
+}
+
+interface VisionResult {
+	vendor: string | null;
+	date: string | null;
+	total: number | null;
+	currency: string | null;
+	line_items: VisionLineItem[];
+}
+
 async function fetchImageAsBase64(url: string): Promise<string> {
 	const res = await fetch(url);
 	if (!res.ok) throw new Error(`Failed to fetch image: ${res.status}`);
@@ -9,7 +24,7 @@ async function fetchImageAsBase64(url: string): Promise<string> {
 	return `data:${mime};base64,${base64}`;
 }
 
-async function callVisionModel(apiKey: string, imageDataUrl: string): Promise<Record<string, unknown>> {
+async function callVisionModel(apiKey: string, imageDataUrl: string): Promise<VisionResult> {
 	const models = ['openai/gpt-4o', 'google/gemini-2.0-flash-001'];
 
 	for (const model of models) {
@@ -57,7 +72,7 @@ If line items are not clearly listed, return an empty array. Use null for any fi
 		const codeMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
 		if (codeMatch) jsonStr = codeMatch[1];
 
-		return JSON.parse(jsonStr);
+		return JSON.parse(jsonStr) as VisionResult;
 	}
 
 	throw new Error('All OpenRouter vision models failed');

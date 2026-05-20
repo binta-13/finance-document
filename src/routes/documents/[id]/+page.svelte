@@ -26,6 +26,7 @@
 		Building2
 	} from "lucide-svelte";
 	import { cn } from "$lib/utils.js";
+	import type { Document, LineItem } from "$lib/types.js";
 
 	let { data } = $props();
 
@@ -36,7 +37,7 @@
 
 	const extraction = data.doc?.extraction;
 
-	let doc = $state(data.doc);
+	let doc = $state(data.doc as Document | null);
 	let saving = $state(false);
 	let ocrRunning = $state(false);
 
@@ -44,9 +45,9 @@
 	let date = $state(extraction?.date ?? '');
 	let total = $state(extraction?.total?.toString() ?? '');
 	let currency = $state(extraction?.currency ?? '');
-	let lineItems = $state(extraction?.line_items?.map((i: any) => ({ ...i })) ?? [{ description: '', quantity: '', unit_price: '', amount: '' }]);
+	let lineItems = $state(extraction?.line_items?.map((i: LineItem) => ({ ...i })) ?? [{ description: '', quantity: '', unit_price: '', amount: '' }] as LineItem[]);
 
-	function confidenceLevel(): { label: string; color: string; icon: any; bg: string; border: string } | null {
+	function confidenceLevel(): { label: string; color: string; icon: typeof CheckCircle2; bg: string; border: string } | null {
 		if (!doc?.extraction?.confidence_json) return null;
 		try {
 			const c = JSON.parse(doc.extraction.confidence_json);
@@ -80,7 +81,7 @@
 		lineItems = [...lineItems, { id: '', description: '', quantity: '', unit_price: '', amount: '' }];
 	}
 	function removeItem(index: number) {
-		lineItems = lineItems.filter((_: any, i: number) => i !== index);
+		lineItems = lineItems.filter((_item, i: number) => i !== index);
 	}
 
 	async function save() {
@@ -96,11 +97,11 @@
 					currency: currency || null,
 					is_reviewed: 1,
 					edited_json: JSON.stringify({ vendor, date, total, currency }),
-					line_items: lineItems.map((i: any) => ({
+					line_items: lineItems.map((i: LineItem) => ({
 						description: i.description || null,
-						quantity: i.quantity ? parseFloat(i.quantity) : null,
-						unit_price: i.unit_price ? parseFloat(i.unit_price) : null,
-						amount: i.amount ? parseFloat(i.amount) : null
+						quantity: i.quantity ? parseFloat(String(i.quantity)) : null,
+						unit_price: i.unit_price ? parseFloat(String(i.unit_price)) : null,
+						amount: i.amount ? parseFloat(String(i.amount)) : null
 					}))
 				}
 			};
@@ -128,7 +129,7 @@
 				total = updated.extraction?.total?.toString() ?? '';
 				currency = updated.extraction?.currency ?? '';
 				lineItems = updated.extraction?.line_items?.length > 0
-					? updated.extraction.line_items.map((i: any) => ({ id: i.id ?? '', description: i.description ?? '', quantity: i.quantity?.toString() ?? '', unit_price: i.unit_price?.toString() ?? '', amount: i.amount?.toString() ?? '' }))
+					? updated.extraction.line_items.map((i: Record<string, unknown>) => ({ id: (i.id as string) ?? '', description: (i.description as string) ?? '', quantity: (i.quantity?.toString() as string) ?? '', unit_price: (i.unit_price?.toString() as string) ?? '', amount: (i.amount?.toString() as string) ?? '' }))
 					: [{ description: '', quantity: '', unit_price: '', amount: '' }];
 			}
 		} finally { ocrRunning = false; }
@@ -139,6 +140,14 @@
 		const a = document.createElement('a');
 		a.href = `/api/documents/${doc.id}/export?format=csv`;
 		a.download = `${doc.filename}_export.csv`;
+		a.click();
+	}
+
+	function downloadTemplate() {
+		if (!doc) return;
+		const a = document.createElement('a');
+		a.href = `/api/documents/template/csv?documentId=${doc.id}`;
+		a.download = `${doc.filename}_template.csv`;
 		a.click();
 	}
 </script>
@@ -162,6 +171,10 @@
 			</div>
 			
 			<div class="flex items-center gap-2">
+				<Button variant="ghost" size="sm" onclick={downloadTemplate} disabled={!doc}>
+					<Download size={16} class="mr-2" />
+					Template
+				</Button>
 				<Button variant="outline" size="sm" class="hidden sm:flex" onclick={exportCsv} disabled={!doc}>
 					<Download size={16} class="mr-2" />
 					Export CSV
@@ -249,7 +262,7 @@
 						<div class="space-y-1.5">
 							<Label for="total" class="text-xs font-bold uppercase text-slate-500">Total Amount</Label>
 							<div class="relative">
-								<DollarSign class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
+								<!-- <DollarSign class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" /> -->
 								<Input id="total" type="number" step="0.01" bind:value={total} class="pl-9 focus:ring-primary font-semibold" placeholder="0.00" />
 							</div>
 						</div>
