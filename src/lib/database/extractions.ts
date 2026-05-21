@@ -64,6 +64,7 @@ export async function upsert(
 			binds.push(existing.id);
 			await DB.prepare(`UPDATE extractions SET ${updates.join(', ')} WHERE id = ?`).bind(...binds).run();
 		}
+		return existing.id;
 	} else {
 		await DB.prepare(`
 			INSERT INTO extractions (id, document_id, vendor, date, total, currency, raw_json, confidence_json, edited_json, is_reviewed)

@@ -21,7 +21,7 @@ export async function GET({ params, platform }) {
   return json(doc);
 }
 
-export async function PUT({ params, request, platform }) {
+export async function PATCH({ params, request, platform }) {
   const env = platform?.env;
   if (!env)
     return json({ error: 'Platform env not available' }, { status: 500 });

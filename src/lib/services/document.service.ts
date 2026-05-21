@@ -34,7 +34,7 @@ export async function updateDocument(id: string, request: Request, env: Env) {
 			id: crypto.randomUUID(),
 			vendor: ext.vendor ?? null,
 			date: ext.date ?? null,
-			total: ext.total ?? null,
+			total: ext.total != null ? Math.round(Number(ext.total)) : null,
 			currency: ext.currency ?? null,
 			edited_json: ext.edited_json,
 			is_reviewed: ext.is_reviewed ?? 0,
@@ -54,5 +54,7 @@ export async function updateDocument(id: string, request: Request, env: Env) {
 		}
 	}
 
-	return (await documents.findById(env.DB, id))!;
+	const updated = await documents.findByIdWithExtraction(env.DB, id);
+	if (!updated) return { error: 'Document not found after update', status: 404 as const };
+	return updated;
 }
