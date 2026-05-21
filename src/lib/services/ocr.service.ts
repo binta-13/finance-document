@@ -21,7 +21,13 @@ async function fetchImageAsBase64(url: string): Promise<string> {
 	const res = await fetch(url);
 	if (!res.ok) throw new Error(`Failed to fetch image: ${res.status}`);
 	const buf = await res.arrayBuffer();
-	const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+	const bytes = new Uint8Array(buf);
+	let binary = '';
+	const chunkSize = 8192;
+	for (let i = 0; i < bytes.length; i += chunkSize) {
+		binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+	}
+	const base64 = btoa(binary);
 	const mime = res.headers.get('content-type') ?? 'image/png';
 	return `data:${mime};base64,${base64}`;
 }
