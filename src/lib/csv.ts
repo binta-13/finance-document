@@ -61,7 +61,7 @@ export function generateInvoiceCsv(data: InvoiceCsvData): string {
 	}
 
 	lines.push('');
-	const sum = data.line_items.reduce((a, i) => a + (i.amount ?? 0), 0);
+	const sum = Math.round(data.line_items.reduce((a, i) => a + (i.amount ?? 0), 0));
 	lines.push(row(['', '', '', 'TOTAL AMOUNT', sum || 0]));
 
 	return lines.join('\r\n');

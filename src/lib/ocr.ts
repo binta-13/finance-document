@@ -92,12 +92,12 @@ function findDate(text: string): string | null {
 function findTotal(text: string): number | null {
 	for (const p of TOTAL_PATTERNS) {
 		const m = text.match(p);
-		if (m) return parseFloat(m[1].replace(/,/g, ''));
+		if (m) return Math.round(parseFloat(m[1].replace(/,/g, '')));
 	}
 	const nums = text.match(/[$€£Rp.]+\s*([\d,]+\.\d{2})/g);
 	if (nums) {
 		const last = nums[nums.length - 1].match(/[$€£Rp.]+\s*([\d,]+\.\d{2})/);
-		if (last) return parseFloat(last[1].replace(/,/g, ''));
+		if (last) return Math.round(parseFloat(last[1].replace(/,/g, '')));
 	}
 	return null;
 }
@@ -127,7 +127,7 @@ function parseLineItems(lines: string[]): { description: string | null; quantity
 
 		const nums = line.match(/[\d,]+\.?\d*/g);
 		if (nums && nums.length >= 1) {
-			const amounts = nums.map(n => parseFloat(n.replace(/,/g, '')));
+			const amounts = nums.map(n => Math.round(parseFloat(n.replace(/,/g, ''))));
 			const desc = line.replace(/[\d,]+\.?\d*/g, '').trim();
 
 			if (desc && amounts.length > 0) {
@@ -135,7 +135,7 @@ function parseLineItems(lines: string[]): { description: string | null; quantity
 					description: desc || null,
 					quantity: amounts.length >= 2 ? amounts[0] : null,
 					unit_price: amounts.length >= 2 ? amounts[1] : amounts[0],
-					amount: amounts.length >= 3 ? amounts[2] : (amounts.length >= 2 ? amounts[1] * amounts[0] : amounts[0])
+					amount: amounts.length >= 3 ? amounts[2] : (amounts.length >= 2 ? Math.round(amounts[1] * amounts[0]) : amounts[0])
 				});
 			}
 		}

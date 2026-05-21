@@ -43,10 +43,10 @@ async function callVisionModel(apiKey: string, imageDataUrl: string): Promise<Vi
 {
   "vendor": "store name or null",
   "date": "YYYY-MM-DD or null",
-  "total": 123.45 or null,
+  "total": 123 or null,
   "currency": "USD/IDR/EUR or null",
   "line_items": [
-    {"description": "item name", "quantity": 1, "unit_price": 10.00, "amount": 10.00}
+    {"description": "item name", "quantity": 1, "unit_price": 10, "amount": 10}
   ]
 }
 If line items are not clearly listed, return an empty array. Use null for any field you cannot determine.` },
@@ -93,7 +93,16 @@ export async function runOcr(documentId: string, env: App.Platform['env']) {
 		const imageDataUrl = await fetchImageAsBase64(doc.file_url);
 		const result = await callVisionModel(env.OPENROUTER_API_KEY, imageDataUrl);
 
-		const rawJson = JSON.stringify(result);
+		const roundedTotal = result.total != null ? Math.round(result.total) : null;
+		const roundedItems = result.line_items?.map(i => ({
+			...i,
+			quantity: i.quantity != null ? Math.round(i.quantity) : null,
+			unit_price: i.unit_price != null ? Math.round(i.unit_price) : null,
+			amount: i.amount != null ? Math.round(i.amount) : null,
+		})) ?? [];
+		const roundedResult = { ...result, total: roundedTotal, line_items: roundedItems };
+
+		const rawJson = JSON.stringify(roundedResult);
 		const confidenceJson = JSON.stringify({
 			confidence: (result.vendor ? 0.25 : 0) + (result.date ? 0.25 : 0) + (result.total ? 0.25 : 0) + ((result.line_items?.length ?? 0) > 0 ? 0.25 : 0),
 			fields: {
@@ -108,20 +117,20 @@ export async function runOcr(documentId: string, env: App.Platform['env']) {
 			id: crypto.randomUUID(),
 			vendor: result.vendor ?? null,
 			date: result.date ?? null,
-			total: result.total ?? null,
+			total: roundedTotal,
 			currency: result.currency ?? null,
 			raw_json: rawJson,
 			confidence_json: confidenceJson,
 			edited_json: rawJson,
 		});
 
-		if (result.line_items?.length > 0) {
-			await extractions.replaceLineItems(env.DB, extractionId, result.line_items);
+		if (roundedItems.length > 0) {
+			await extractions.replaceLineItems(env.DB, extractionId, roundedItems);
 		}
 
 		await documents.updateStatus(env.DB, doc.id, 'completed');
 
-		return { data: { id: doc.id, status: 'completed', extraction: result } };
+		return { data: { id: doc.id, status: 'completed', extraction: roundedResult } };
 	} catch (err) {
 		await documents.updateStatus(env.DB, doc.id, 'failed');
 		return { error: 'OCR processing failed', details: String(err), status: 500 as const };

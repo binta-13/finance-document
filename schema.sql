@@ -12,7 +12,7 @@ CREATE TABLE extractions (
   document_id TEXT NOT NULL,
   vendor TEXT,
   date TEXT,
-  total DECIMAL(10,2),
+  total INTEGER,
   currency TEXT,
   raw_json TEXT,
   confidence_json TEXT,
@@ -27,7 +27,7 @@ CREATE TABLE line_items (
   extraction_id TEXT NOT NULL,
   description TEXT,
   quantity INTEGER,
-  unit_price DECIMAL(10,2),
-  amount DECIMAL(10,2),
+  unit_price INTEGER,
+  amount INTEGER,
   FOREIGN KEY (extraction_id) REFERENCES extractions(id) ON DELETE CASCADE
 );

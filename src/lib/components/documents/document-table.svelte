@@ -58,7 +58,7 @@
 						<TableCell>
 							{#if doc.total != null}
 								<span class="font-semibold text-slate-900">
-									{doc.currency ?? ''} {doc.total.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+									{doc.currency ?? ''} {doc.total.toLocaleString()}
 								</span>
 							{:else}
 								<span class="text-slate-400">—</span>

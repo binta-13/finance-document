@@ -46,9 +46,9 @@ export async function updateDocument(id: string, request: Request, env: Env) {
 				extId,
 				ext.line_items.map((i: Record<string, unknown>) => ({
 					description: (i.description as string) ?? null,
-					quantity: i.quantity ? parseFloat(String(i.quantity)) : null,
-					unit_price: i.unit_price ? parseFloat(String(i.unit_price)) : null,
-					amount: i.amount ? parseFloat(String(i.amount)) : null,
+					quantity: i.quantity ? Math.round(parseFloat(String(i.quantity))) : null,
+					unit_price: i.unit_price ? Math.round(parseFloat(String(i.unit_price))) : null,
+					amount: i.amount ? Math.round(parseFloat(String(i.amount))) : null,
 				}))
 			);
 		}

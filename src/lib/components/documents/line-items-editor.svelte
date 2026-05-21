@@ -45,11 +45,11 @@
 					</div>
 					<div class="col-span-4 sm:col-span-2">
 						<Label class="mb-1 block text-[10px] font-bold uppercase text-slate-400">Price</Label>
-						<Input type="number" step="0.01" bind:value={item.unit_price} placeholder="0.00" class="bg-white text-right" />
+						<Input type="number" step="1" bind:value={item.unit_price} placeholder="0" class="bg-white text-right" />
 					</div>
 					<div class="col-span-4 sm:col-span-2">
 						<Label class="mb-1 block text-[10px] font-bold uppercase text-slate-400">Amount</Label>
-						<Input type="number" step="0.01" bind:value={item.amount} placeholder="0.00" class="bg-white text-right font-medium" />
+						<Input type="number" step="1" bind:value={item.amount} placeholder="0" class="bg-white text-right font-medium" />
 					</div>
 				</div>
 				<button

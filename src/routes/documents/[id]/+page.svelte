@@ -43,20 +43,20 @@
 				extraction: {
 					vendor: vendor || null,
 					date: date || null,
-					total: total ? parseFloat(total) : null,
+					total: total ? Math.round(parseFloat(total)) : null,
 					currency: currency || null,
 					is_reviewed: 1,
 					edited_json: JSON.stringify({ vendor, date, total, currency }),
 					line_items: lineItems.map((i: LineItem) => ({
 						description: i.description || null,
-						quantity: i.quantity ? parseFloat(String(i.quantity)) : null,
-						unit_price: i.unit_price ? parseFloat(String(i.unit_price)) : null,
-						amount: i.amount ? parseFloat(String(i.amount)) : null
+						quantity: i.quantity ? Math.round(parseFloat(String(i.quantity))) : null,
+						unit_price: i.unit_price ? Math.round(parseFloat(String(i.unit_price))) : null,
+						amount: i.amount ? Math.round(parseFloat(String(i.amount))) : null
 					}))
 				}
 			};
 			const res = await fetch(`/api/documents/${doc.id}`, {
-				method: 'PATCH',
+				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(payload)
 			});
@@ -161,7 +161,7 @@
 						<div class="space-y-1.5">
 							<Label for="total" class="text-xs font-bold uppercase text-slate-500">Total Amount</Label>
 							<div class="relative">
-								<Input id="total" type="number" step="0.01" bind:value={total} class="pl-9 focus:ring-primary font-semibold" placeholder="0.00" />
+								<Input id="total" type="number" step="1" bind:value={total} class="pl-9 focus:ring-primary font-semibold" placeholder="0" />
 							</div>
 						</div>
 						<div class="space-y-1.5">
