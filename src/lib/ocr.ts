@@ -1,3 +1,5 @@
+import { PDF_WORKER_SRC, PDF_RENDER_SCALE, VENDOR_KEYWORDS, DATE_PATTERNS, TOTAL_PATTERNS } from '$lib/config/constants.js';
+
 export interface OcrResult {
 	vendor: string | null;
 	date: string | null;
@@ -14,11 +16,11 @@ async function toImageBlob(input: Blob | string): Promise<Blob> {
 
 	if (input.type === 'application/pdf') {
 		const pdfjsLib = await import('pdfjs-dist');
-		pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.8.69/pdf.worker.min.mjs';
+		pdfjsLib.GlobalWorkerOptions.workerSrc = PDF_WORKER_SRC;
 		const buf = await input.arrayBuffer();
 		const pdf = await pdfjsLib.getDocument(buf).promise;
 		const page = await pdf.getPage(1);
-		const viewport = page.getViewport({ scale: 2 });
+		const viewport = page.getViewport({ scale: PDF_RENDER_SCALE });
 		const canvas = document.createElement('canvas');
 		canvas.width = viewport.width;
 		canvas.height = viewport.height;
@@ -60,17 +62,16 @@ function parseInvoiceText(text: string): OcrResult {
 	const vendor = findVendor(lines);
 	const date = findDate(text);
 	const total = findTotal(text);
-	const currency = findCurrency(text, total);
+	const currency = findCurrency(text);
 	const lineItems = parseLineItems(lines);
 
 	return { vendor, date, total, currency, line_items: lineItems };
 }
 
 function findVendor(lines: string[]): string | null {
-	const keywords = ['vendor', 'supplier', 'from:', 'bill from', 'company'];
 	for (const line of lines.slice(0, 15)) {
 		const lower = line.toLowerCase();
-		for (const kw of keywords) {
+		for (const kw of VENDOR_KEYWORDS) {
 			if (lower.includes(kw)) {
 				const parts = line.split(/[:]\s*/);
 				if (parts.length > 1) return parts[1].trim();
@@ -81,12 +82,7 @@ function findVendor(lines: string[]): string | null {
 }
 
 function findDate(text: string): string | null {
-	const patterns = [
-		/(\d{4}[-/]\d{2}[-/]\d{2})/,
-		/(\d{2}[-/]\d{2}[-/]\d{4})/,
-		/(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(\d{4})/i
-	];
-	for (const p of patterns) {
+	for (const p of DATE_PATTERNS) {
 		const m = text.match(p);
 		if (m) return m[1];
 	}
@@ -94,13 +90,7 @@ function findDate(text: string): string | null {
 }
 
 function findTotal(text: string): number | null {
-	const patterns = [
-		/total[:\s]*[$€£Rp.]*\s*([\d,]+\.?\d*)/i,
-		/amount[:\s]*[$€£Rp.]*\s*([\d,]+\.?\d*)/i,
-		/sum[:\s]*[$€£Rp.]*\s*([\d,]+\.?\d*)/i,
-		/grand[:\s]*[$€£Rp.]*\s*([\d,]+\.?\d*)/i
-	];
-	for (const p of patterns) {
+	for (const p of TOTAL_PATTERNS) {
 		const m = text.match(p);
 		if (m) return parseFloat(m[1].replace(/,/g, ''));
 	}
@@ -112,7 +102,7 @@ function findTotal(text: string): number | null {
 	return null;
 }
 
-function findCurrency(text: string, _total: number | null): string | null {
+function findCurrency(text: string): string | null {
 	if (/[Rr][Pp]/.test(text)) return 'IDR';
 	if (/[$]/.test(text)) return 'USD';
 	if (/[€]/.test(text)) return 'EUR';

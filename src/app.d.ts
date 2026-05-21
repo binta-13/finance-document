@@ -1,15 +1,25 @@
 declare global {
-  namespace App {
-    interface Platform {
-      env: {
-        DB: D1Database;
-        CLOUDINARY_CLOUD_NAME: string;
-        CLOUDINARY_UPLOAD_PRESET: string;
-        OPENROUTER_API_KEY: string;
-      };
-    }
+	interface D1PreparedStatement {
+		bind(...params: unknown[]): D1PreparedStatement;
+		first<T = unknown>(): Promise<T | null>;
+		all<T = unknown>(): Promise<{ results: T[] }>;
+		run(): Promise<{ success: boolean }>;
+	}
 
-    // no global PageData — each page declares its own via load function
-  }
+	interface D1Database {
+		prepare(sql: string): D1PreparedStatement;
+	}
+
+	namespace App {
+		interface Platform {
+			env: {
+				DB: D1Database;
+				CLOUDINARY_CLOUD_NAME: string;
+				CLOUDINARY_UPLOAD_PRESET: string;
+				OPENROUTER_API_KEY: string;
+			};
+		}
+	}
 }
+
 export {};
