@@ -17,22 +17,29 @@
 		return url.replace(/\/upload\//, '/upload/f_jpg/');
 	}
 
-	let { data } = $props();
+	let { data: page } = $props();
 
-	const extraction = data.doc?.extraction;
-	const confidenceJson = extraction?.confidence_json ?? null;
+	const confidenceJson = $derived(page.doc?.extraction?.confidence_json ?? null);
 
-	let doc = $state(data.doc as Document | null);
+	let doc = $state(initDoc());
 	let saving = $state(false);
 	let ocrRunning = $state(false);
 
-	let vendor = $state(extraction?.vendor ?? '');
-	let date = $state(extraction?.date ?? '');
-	let total = $state(extraction?.total?.toString() ?? '');
-	let currency = $state(extraction?.currency ?? '');
-	let lineItems = $state(
-		extraction?.line_items?.map((i: LineItem) => ({ ...i })) ?? [{ description: '', quantity: '', unit_price: '', amount: '' }] as LineItem[]
-	);
+	let vendor = $state(initVendor());
+	let date = $state(initDate());
+	let total = $state(initTotal());
+	let currency = $state(initCurrency());
+	let lineItems = $state(initLineItems());
+
+	function initDoc() { return page.doc as Document | null; }
+	function initVendor() { return page.doc?.extraction?.vendor ?? ''; }
+	function initDate() { return page.doc?.extraction?.date ?? ''; }
+	function initTotal() { return page.doc?.extraction?.total?.toString() ?? ''; }
+	function initCurrency() { return page.doc?.extraction?.currency ?? ''; }
+	function initLineItems() {
+		return page.doc?.extraction?.line_items?.map((i: LineItem) => ({ ...i }))
+			?? [{ description: '', quantity: '', unit_price: '', amount: '' }] as LineItem[];
+	}
 
 	async function save() {
 		if (!doc) return;

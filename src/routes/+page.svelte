@@ -8,10 +8,13 @@
 	import DocumentTable from "$lib/components/documents/document-table.svelte";
 	import { DOCUMENT_POLL_INTERVAL, DASHBOARD_DOCUMENT_LIMIT } from "$lib/config/constants.js";
 
-	let { data } = $props();
+	let { data: page } = $props();
 
-	let docs = $state(data.docs ?? [] as Document[]);
-	let pending = $state(data.pending ?? [] as Document[]);
+	let docs = $state(initDocs());
+	let pending = $state(initPending());
+
+	function initDocs() { return page.docs ?? [] as Document[]; }
+	function initPending() { return page.pending ?? [] as Document[]; }
 	let uploading = $state(false);
 	let uploadCount = $state(0);
 	let totalUploads = $state(0);

@@ -21,7 +21,7 @@
 
 {#if confidence}
 	<Badge variant="outline" class={cn("gap-1.5", confidence.bg, confidence.color, confidence.border)}>
-		<svelte:component this={confidence.icon} size={12} />
+		<confidence.icon size={12} />
 		{confidence.label}
 	</Badge>
 {/if}
